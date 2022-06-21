@@ -53,18 +53,31 @@ function Invoke-Ptask {
       ValueFromPipelineByPropertyName = $false
     )]
     [ValidateNotNullOrEmpty()]
-    [string]  $Recurence
+    [string]  $Recurence,
+
+    [Parameter(
+      Mandatory = $false,
+      ValueFromPipeline = $false,
+      ValueFromPipelineByPropertyName = $false
+    )]
+    [ValidateNotNullOrEmpty()]
+    [string]  $User
   )
 
   BEGIN {
     Write-Host $banner -f Green
     Write-Host "Registering new task..." -f Yellow
+
+    $taskDynamicParams = @{}
+    if ($Description) { $taskDynamicParams | add-member -MemberType NoteProperty -Name 'Description' -Value $Description }
+    if ($User) { $taskDynamicParams | add-member -MemberType NoteProperty -Name 'User' -Value $User }
+
   }
 
   PROCESS {
     $taskTrigger = New-ScheduledTaskTrigger -Daily -At $Time
     $taskAction = New-ScheduledTaskAction -Execute 'pwsh.exe' -Argument ('-noprofile -command ' + $Action)
-    Register-ScheduledTask -Action $taskAction -Trigger $taskTrigger -TaskName $TaskName
+    Register-ScheduledTask -Action $taskAction -Trigger $taskTrigger -TaskName $TaskName @taskDynamicParams
   }
 
   END {

@@ -32,12 +32,20 @@ function Invoke-Ptask {
     [string]  $Description,
 
     [Parameter(
-      Mandatory = $true,
+      Mandatory = $false,
       ValueFromPipeline = $false,
       ValueFromPipelineByPropertyName = $false
     )]
     [ValidateNotNullOrEmpty()]
-    [scriptblock]  $Action,
+    [scriptblock]  $ActionCommand,
+
+    [Parameter(
+      Mandatory = $false,
+      ValueFromPipeline = $false,
+      ValueFromPipelineByPropertyName = $false
+    )]
+    [ValidateNotNullOrEmpty()]
+    [scriptblock]  $ActionFile,
 
     [Parameter(
       Mandatory = $false,
@@ -68,6 +76,26 @@ function Invoke-Ptask {
     Write-Host $banner -f Green
     Write-Host "Registering new task..." -f Yellow
 
+    $actionMode = "-command"
+    $actionParam = $null
+
+    if (!$ActionCommand && !$ActionFile) {
+      throw "A file or command must be specified !"
+    }
+    elseif ($ActionCommand && $ActionFile) {
+      throw "Expected an action command or file, but both were specified !"
+    }
+    elseif ($ActionCommand) {
+      $actionParam = $ActionCommand
+    }
+    else {
+      if (!(Test-Path $ActionFile)) {
+        throw "The provided path $ActionFile is not valid !"
+      }
+      $actionMode = "-file"
+      $ActionCommand = $ActionFile
+    }
+
     $taskDynamicParams = @{}
     if ($Description) { $taskDynamicParams | add-member -MemberType NoteProperty -Name 'Description' -Value $Description }
     if ($User) { $taskDynamicParams | add-member -MemberType NoteProperty -Name 'User' -Value $User }
@@ -76,7 +104,7 @@ function Invoke-Ptask {
 
   PROCESS {
     $taskTrigger = New-ScheduledTaskTrigger -Daily -At $Time
-    $taskAction = New-ScheduledTaskAction -Execute 'pwsh.exe' -Argument ('-noprofile -command ' + $Action)
+    $taskAction = New-ScheduledTaskAction -Execute 'pwsh.exe' -Argument ("-noprofile $actionMode " + $actionParam)
     Register-ScheduledTask -Action $taskAction -Trigger $taskTrigger -TaskName $TaskName @taskDynamicParams
   }
 

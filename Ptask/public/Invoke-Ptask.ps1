@@ -79,10 +79,10 @@ function Invoke-Ptask {
     $actionMode = "-command"
     $actionParam = $null
 
-    if (!$ActionCommand && !$ActionFile) {
+    if (!$ActionCommand -and !$ActionFile) {
       throw "A file or command must be specified !"
     }
-    elseif ($ActionCommand && $ActionFile) {
+    elseif ($ActionCommand -and $ActionFile) {
       throw "Expected an action command or file, but both were specified !"
     }
     elseif ($ActionCommand) {
@@ -93,7 +93,7 @@ function Invoke-Ptask {
         throw "The provided path $ActionFile is not valid !"
       }
       $actionMode = "-file"
-      $ActionCommand = $ActionFile
+      $actionParam = $ActionFile
     }
 
     $taskDynamicParams = @{}

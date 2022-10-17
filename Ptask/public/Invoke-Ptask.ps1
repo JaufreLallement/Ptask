@@ -45,7 +45,7 @@ function Invoke-Ptask {
       ValueFromPipelineByPropertyName = $false
     )]
     [ValidateNotNullOrEmpty()]
-    [scriptblock]  $ActionFile,
+    [string]  $ActionFile,
 
     [Parameter(
       Mandatory = $false,
@@ -89,7 +89,7 @@ function Invoke-Ptask {
       $actionParam = $ActionCommand
     }
     else {
-      if (!(Test-Path $ActionFile)) {
+      if (!(Test-Path -PathType Leaf -Path $ActionFile)) {
         throw "The provided path $ActionFile is not valid !"
       }
       $actionMode = "-file"
